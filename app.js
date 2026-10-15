@@ -2,6 +2,7 @@
   'use strict';
 
   const C = window.MeetingCost;
+  const S = window.MeetingShare;
   const $ = (id) => document.getElementById(id);
 
   // Gesamter Zustand lebt nur im Speicher – es wird nichts persistiert.
@@ -11,11 +12,14 @@
     endedAt: null,
     participants: [], // { id, name, count, rate, joinedAt, leftAt }
     nextId: 1,
+    readonly: false, // geöffnet über einen Teilen-Link
+    anonymous: false, // Teilen-Link ohne Namen und Einzelsätze
   };
 
   let fmt;
   let ticker = null;
   let wakeLock = null;
+  let lastSharedUrl = null; // zuletzt kopierter Teilen-Link, um veraltete Links zu erkennen
 
   const money = (v) => fmt.format(v);
   const clock = (ts) => new Date(ts).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
@@ -92,7 +96,7 @@
 
       li.append(name, rate, status, cost);
 
-      if (state.phase !== 'stopped' && p.leftAt === null) {
+      if (state.phase !== 'stopped' && p.leftAt === null && !state.readonly) {
         const btn = document.createElement('button');
         btn.className = 'remove';
         btn.textContent = state.phase === 'setup' ? 'Löschen' : 'Entfernen';
@@ -113,13 +117,17 @@
   }
 
   function renderPhase() {
-    const { phase } = state;
+    const { phase, readonly } = state;
     document.body.dataset.phase = phase;
     $('status').textContent = { setup: 'Bereit', running: 'Läuft', stopped: 'Beendet' }[phase];
     $('start-controls').hidden = phase !== 'setup';
-    $('stop').hidden = phase !== 'running';
+    $('stop').hidden = phase !== 'running' || readonly;
     $('present').hidden = phase === 'setup';
-    $('add-form').hidden = phase === 'stopped';
+    $('share-toggle').hidden = phase === 'setup' || readonly;
+    if (phase === 'setup') setShareOpen(false);
+    $('add-form').hidden = phase === 'stopped' || readonly;
+    $('participants').hidden = readonly && state.anonymous;
+    $('reset').hidden = readonly;
     $('p-since-wrap').hidden = phase !== 'running';
     $('summary').hidden = phase !== 'stopped';
     if (phase !== 'running') document.title = 'Meeting-Kosten-Timer';
@@ -142,11 +150,35 @@
     $('p-rate-preview').textContent = Number.isFinite(rate) ? `= ${money(rate)} / Stunde` : '';
   }
 
+  function shareUrl() {
+    const snapshot = {
+      startedAt: state.startedAt,
+      endedAt: state.endedAt,
+      currency: $('currency').value,
+      participants: state.participants,
+    };
+    const code = S.encode(snapshot, { anonymous: $('share-anon').checked });
+    return `${location.href.split('#')[0]}#s=${code}`;
+  }
+
+  // Hält Link-Feld und Hinweis „veraltet“ aktuell; nach jeder Zustandsänderung aufrufen.
+  function renderShare() {
+    if (state.readonly || state.phase === 'setup') {
+      $('share-stale').hidden = true;
+      return;
+    }
+    const url = shareUrl();
+    $('share-url').value = url;
+    $('share-privacy').hidden = $('share-anon').checked;
+    $('share-stale').hidden = lastSharedUrl === null || lastSharedUrl === url;
+  }
+
   function renderAll() {
     renderPhase();
     renderList();
     renderDisplay();
     renderRatePreview();
+    renderShare();
   }
 
   // ---------- Aktionen ----------
@@ -175,6 +207,7 @@
     renderRatePreview();
     renderList();
     renderDisplay();
+    renderShare();
   }
 
   function removeParticipant(id) {
@@ -188,6 +221,7 @@
     }
     renderList();
     renderDisplay();
+    renderShare();
   }
 
   function showStartError(msg) {
@@ -227,6 +261,7 @@
     state.endedAt = null;
     state.participants = [];
     state.nextId = 1;
+    lastSharedUrl = null;
     $('start-time').value = currentTimeValue();
     renderAll();
   }
@@ -246,13 +281,18 @@
       `Meeting-Kosten: ${$('sum-cost').textContent}`,
       `Dauer: ${$('sum-time').textContent} (${$('sum-range').textContent})`,
       `Ø pro Minute: ${$('sum-per-minute').textContent}`,
-      '',
-      ...state.participants.map(
-        (p) =>
-          `${p.name}${p.count > 1 ? ` × ${p.count}` : ''}: ` +
-          money(C.participantCost(p, state.startedAt, state.endedAt))
-      ),
     ];
+    // Bei anonym geteilten Links sind die Einträge nur Zeitabschnitte, keine Personen.
+    if (!state.anonymous) {
+      lines.push(
+        '',
+        ...state.participants.map(
+          (p) =>
+            `${p.name}${p.count > 1 ? ` × ${p.count}` : ''}: ` +
+            money(C.participantCost(p, state.startedAt, state.endedAt))
+        )
+      );
+    }
     navigator.clipboard.writeText(lines.join('\n')).then(
       () => flash($('copy'), 'Kopiert ✓'),
       () => flash($('copy'), 'Kopieren fehlgeschlagen')
@@ -263,6 +303,79 @@
     const original = btn.textContent;
     btn.textContent = text;
     setTimeout(() => (btn.textContent = original), 1500);
+  }
+
+  // ---------- Teilen ----------
+
+  function setShareOpen(open) {
+    $('share').hidden = !open;
+    $('share-toggle').setAttribute('aria-expanded', String(open));
+    $('share-toggle').textContent = open ? 'Teilen schließen' : 'Link teilen';
+  }
+
+  function openShare() {
+    setShareOpen(true);
+    renderShare();
+    $('share').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function copyShareUrl() {
+    const url = shareUrl();
+    $('share-url').value = url;
+    navigator.clipboard.writeText(url).then(
+      () => {
+        lastSharedUrl = url;
+        renderShare();
+        flash($('share-copy'), 'Kopiert ✓');
+      },
+      () => {
+        // z. B. ohne Clipboard-Berechtigung: Link markieren, damit man ihn selbst kopieren kann.
+        $('share-url').select();
+        flash($('share-copy'), 'Bitte manuell kopieren');
+      }
+    );
+  }
+
+  function showBanner(text, isError) {
+    $('banner').textContent = text;
+    $('banner').classList.toggle('error', isError);
+    $('banner').hidden = false;
+  }
+
+  // Öffnet die App über einen Teilen-Link (#s=…) schreibgeschützt.
+  function loadSharedState() {
+    if (!location.hash.startsWith('#s=')) return;
+    let shared;
+    try {
+      shared = S.decode(location.hash.slice(3));
+    } catch {
+      showBanner('Der geteilte Link ist ungültig oder beschädigt. Es wurde ein leerer Timer geöffnet.', true);
+      try {
+        history.replaceState(null, '', location.href.split('#')[0]);
+      } catch {
+        // file:// erlaubt replaceState nicht überall – dann bleibt der Hash einfach stehen.
+      }
+      return;
+    }
+
+    state.readonly = true;
+    state.anonymous = shared.anonymous;
+    state.startedAt = shared.startedAt;
+    state.endedAt = shared.endedAt;
+    state.participants = shared.participants;
+    state.nextId = shared.participants.length + 1;
+    state.phase = shared.endedAt === null ? 'running' : 'stopped';
+    if ([...$('currency').options].some((o) => o.value === shared.currency)) {
+      $('currency').value = shared.currency;
+    }
+    showBanner(
+      'Geteilte Ansicht, nur lesen. Änderungen, die nach dem Erstellen des Links gemacht wurden, sind hier nicht enthalten.',
+      false
+    );
+    if (state.phase === 'running') {
+      ticker = setInterval(tick, 50);
+      requestWakeLock();
+    }
   }
 
   // ---------- Präsentation / Bildschirm ----------
@@ -308,6 +421,17 @@
   $('reset').addEventListener('click', reset);
   $('copy').addEventListener('click', copySummary);
   $('present').addEventListener('click', togglePresentation);
+  $('share-toggle').addEventListener('click', () => ($('share').hidden ? openShare() : setShareOpen(false)));
+  $('share-stale-open').addEventListener('click', openShare);
+  $('share-copy').addEventListener('click', copyShareUrl);
+  $('share-anon').addEventListener('change', renderShare);
+  $('share-url').addEventListener('focus', () => $('share-url').select());
+  // Wer den Link per Tastatur oder Kontextmenü kopiert, hat ihn ebenfalls geteilt.
+  $('share-url').addEventListener('copy', () => {
+    lastSharedUrl = $('share-url').value;
+    renderShare();
+  });
+  $('share-file').hidden = location.protocol !== 'file:';
 
   $('p-mode').addEventListener('change', () => {
     const annual = $('p-mode').value === 'annual';
@@ -335,8 +459,13 @@
   });
   // Nichts wird gespeichert – daher vor versehentlichem Neuladen warnen.
   window.addEventListener('beforeunload', (e) => {
-    if (state.phase === 'running') e.preventDefault();
+    if (state.phase === 'running' && !state.readonly) e.preventDefault();
+  });
+  // Ein neuer Teilen-Link im selben Tab ändert nur den Hash – dann neu laden.
+  window.addEventListener('hashchange', () => {
+    if (location.hash.startsWith('#s=')) location.reload();
   });
 
+  loadSharedState();
   setCurrency($('currency').value);
 })();
