@@ -14,6 +14,7 @@ Die App läuft komplett im Browser. Es gibt keinen Server und keine Abhängigkei
 - **Während des Meetings:**
   - Personen hinzufügen, wahlweise „dabei seit jetzt“ oder „seit Meetingbeginn“
   - Personen entfernen; ihre bis dahin angefallenen Kosten bleiben erhalten
+- **Link teilen:** Während oder nach dem Meeting einen Link erzeugen, über den andere denselben Timer schreibgeschützt sehen. Der gesamte Zustand steckt im Link, es ist kein Server nötig. Wahlweise ohne Namen und Stundensätze (nur Gesamtkosten).
 - **Präsentationsmodus:** Vollbild mit großen Zahlen zum Teilen per Bildschirmfreigabe; mit Esc beenden
 - **Ergebnis nach dem Stopp:** Gesamtkosten, Gesamtdauer, Zeitraum, Ø Kosten pro Minute, Kosten je Person; per Klick als Text kopierbar
 - Der Bildschirm bleibt an, solange der Timer läuft (Screen Wake Lock, sofern vom Browser unterstützt)
@@ -38,13 +39,23 @@ Alternativ lässt sich die App als statische Seite hosten, z. B. über **GitHub 
 1. Währung wählen.
 2. Teilnehmende mit Stundensatz oder Jahresgehalt hinzufügen.
 3. „Ab jetzt“ oder eine Startzeit wählen und **Start** drücken.
-4. Optional auf **Präsentation** klicken und das Fenster im Call teilen.
+4. Optional auf **Präsentation** klicken und das Fenster im Call teilen, oder über **Link teilen** einen Link kopieren und z. B. in den Meeting-Chat posten.
 5. Mit **Stopp** beenden. Das Ergebnis wird angezeigt und lässt sich kopieren.
 6. **Neues Meeting** setzt alles zurück, auch die Teilnehmendenliste.
+
+### Link teilen
+
+- Der Link enthält den kompletten Stand des Meetings (Startzeit, ggf. Endzeit, Währung, Teilnehmende) im URL-Fragment (`#s=…`). Wer ihn öffnet, sieht den Timer schreibgeschützt; Kosten und Zeit berechnet der eigene Browser aus den Zeitstempeln.
+- Der Link ist ein **Schnappschuss**. Werden danach Personen hinzugefügt oder entfernt oder wird das Meeting gestoppt, sehen andere das erst mit einem neuen Link. Die App weist darauf hin („Der geteilte Link ist veraltet“).
+- Mit **Namen und Stundensätze ausblenden** enthält der Link nur Zeitabschnitte mit Kopfzahl und Gesamtsatz. Die Teilnehmendenliste wird dann nicht angezeigt.
+- Die Uhren der Geräte können um einige Sekunden voneinander abweichen.
+- Damit andere den Link öffnen können, muss die App für sie erreichbar sein (z. B. GitHub Pages oder Docker). Ein Link auf eine lokal geöffnete `file://`-Datei funktioniert nur auf dem eigenen Rechner.
 
 ## Datenschutz
 
 Alle Eingaben bleiben im Speicher des Browser-Tabs. Es gibt kein Tracking, keine Cookies, kein `localStorage` und keine Netzwerkanfragen. Nach dem Schließen oder Neuladen des Tabs sind alle Daten weg.
+
+Ein Teilen-Link enthält die Daten des Meetings, standardmäßig auch **Namen und Stundensätze**. Wer den Link hat, kann daraus Rückschlüsse auf Gehälter ziehen. Wer das nicht möchte, setzt beim Teilen den Haken bei „Namen und Stundensätze ausblenden“. Die Daten stehen im Fragment hinter `#`, das der Browser beim Aufruf nicht an den Server schickt.
 
 ## Projektstruktur
 
@@ -54,6 +65,7 @@ Alle Eingaben bleiben im Speicher des Browser-Tabs. Es gibt kein Tracking, keine
 | `style.css`  | Styles; Farbtokens in `:root` mit Dark-Mode-Overrides; Präsentationsmodus über `body.present` |
 | `app.js`     | Zustand, Rendering, Event-Handler, Ticker, Präsentationsmodus, Wake Lock |
 | `calc.js`    | Reine Berechnungslogik ohne DOM, auch in Node nutzbar |
+| `share.js`   | Kodieren/Dekodieren der Teilen-Links und Anonymisierung, ohne DOM, auch in Node nutzbar |
 | `CLAUDE.md`  | Hinweise für Claude Code (KI-Assistent) zur Arbeit am Repository |
 
 ## Weiterentwicklung
@@ -64,7 +76,8 @@ Für die App selbst nur ein aktueller Browser. Wer die Berechnungslogik testen w
 
 ### Technische Entscheidungen
 
-- **Keine ES-Module:** Die Skripte werden als klassische `<script>`-Tags geladen, weil Browser ES-Module über `file://` blockieren. `calc.js` registriert sich im Browser als `window.MeetingCost` und exportiert in Node über `module.exports`.
+- **Keine ES-Module:** Die Skripte werden als klassische `<script>`-Tags geladen, weil Browser ES-Module über `file://` blockieren. `calc.js` und `share.js` registrieren sich im Browser als `window.MeetingCost` bzw. `window.MeetingShare` und exportieren in Node über `module.exports`.
+- **Teilen ohne Backend:** Der Zustand wird als JSON, Base64url-kodiert, ins URL-Fragment geschrieben. Zeitpunkte stehen relativ zur Startzeit im Link, damit er kürzer bleibt. Es gibt bewusst keine Live-Synchronisation.
 - **Keine Persistenz:** Das ist so gewollt. Bitte keinen Speicher (`localStorage`, Cookies, Backend) einbauen, ohne das vorher abzustimmen.
 - **Ticker per `setInterval` (50 ms) statt `requestAnimationFrame`:** So läuft die Anzeige auch dann weiter, wenn das Fenster per Bildschirmfreigabe geteilt wird und nicht im Vordergrund ist.
 - **Sprache:** Oberfläche und Code-Kommentare sind auf Deutsch. Zahlen und Uhrzeiten werden über `Intl` im Format `de-DE` angezeigt.
@@ -81,12 +94,15 @@ state = {
   participants: [ // ein Eintrag pro Zeile, ggf. mit Anzahl > 1
     { id, name, count, rate, joinedAt, leftAt }
   ],
+  readonly,       // true, wenn über einen Teilen-Link geöffnet
+  anonymous,      // true, wenn der Teilen-Link ohne Namen und Sätze erstellt wurde
 }
 ```
 
 - `rate` ist der Stundensatz **pro Person**.
 - `joinedAt === null` heißt „seit Meetingbeginn dabei“ (gilt für alle, die vor dem Start eingetragen werden).
 - `leftAt === null` heißt „noch dabei“. Wer während des Meetings entfernt wird, behält seinen Eintrag mit gesetztem `leftAt`. Vor dem Start wird ein Eintrag dagegen ganz gelöscht.
+- Bei anonym geteilten Links ersetzt `share.js` die Einträge durch Zeitabschnitte (`count` = Köpfe, `rate` = Gesamtsatz ÷ Köpfe). So rechnet `calc.js` unverändert dieselben Kosten.
 
 ### Berechnung
 
@@ -108,13 +124,17 @@ Für die Berechnungslogik gibt es noch keine Testdateien. Ein schneller Check in
 node -e '
 const C = require("./calc.js");
 const H = 3600000;
-const p = { rate: 60, count: 2, joinedAt: null, leftAt: null };
+const p = { name: "Dev", rate: 60, count: 2, joinedAt: null, leftAt: null };
 console.log(C.participantCost(p, 0, H)); // 120
 console.log(C.formatDuration(3723000));  // 1:02:03
+
+const S = require("./share.js");
+const code = S.encode({ startedAt: 0, endedAt: H, currency: "EUR", participants: [p] });
+console.log(C.totalCost(S.decode(code).participants, 0, H)); // 120
 '
 ```
 
-Oberfläche und Abläufe bitte manuell im Browser prüfen: Start ab jetzt und mit vergangener Startzeit, Personen während des Meetings hinzufügen und entfernen, Stopp, Präsentationsmodus, schmale Fensterbreite und Dark Mode.
+Oberfläche und Abläufe bitte manuell im Browser prüfen: Start ab jetzt und mit vergangener Startzeit, Personen während des Meetings hinzufügen und entfernen, Stopp, Präsentationsmodus, Teilen-Link (laufend, beendet, anonym, beschädigt), schmale Fensterbreite und Dark Mode.
 
 ### Bekannte Einschränkungen und Ideen
 

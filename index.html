@@ -21,6 +21,8 @@
   </header>
 
   <main>
+    <p id="banner" class="banner" role="status" hidden></p>
+
     <section id="display" class="display">
       <div class="status" id="status">Bereit</div>
       <div class="cost" id="cost">0,00 €</div>
@@ -42,8 +44,35 @@
         </div>
         <button id="stop" class="danger big" hidden>Stopp</button>
         <button id="present" hidden>Präsentation</button>
+        <button id="share-toggle" hidden aria-expanded="false" aria-controls="share">Link teilen</button>
       </div>
       <p id="start-error" class="error" role="alert" hidden></p>
+      <p id="share-stale" class="stale" role="status" hidden>
+        Seit dem Teilen hat sich etwas geändert. Der geteilte Link ist veraltet,
+        <button type="button" id="share-stale-open" class="link">bitte neu teilen</button>.
+      </p>
+    </section>
+
+    <section id="share" class="card share" hidden>
+      <h2>Link teilen</h2>
+      <p class="hint">
+        Wer den Link öffnet, sieht diesen Timer schreibgeschützt und live mitlaufen. Der Link ist ein
+        Schnappschuss: Spätere Änderungen (Personen hinzufügen oder entfernen, Stopp) sehen andere erst
+        mit einem neuen Link.
+      </p>
+      <label class="check"><input type="checkbox" id="share-anon"> Namen und Stundensätze ausblenden
+        (nur Gesamtkosten teilen)</label>
+      <div class="share-row">
+        <input id="share-url" readonly aria-label="Teilen-Link">
+        <button id="share-copy" class="primary">Link kopieren</button>
+      </div>
+      <p id="share-privacy" class="hint">
+        Der Link enthält Namen und Stundensätze. Wer ihn hat, kann daraus Rückschlüsse auf Gehälter ziehen.
+      </p>
+      <p id="share-file" class="hint" hidden>
+        Die App ist lokal geöffnet (<code>file://</code>). Andere können den Link nur nutzen, wenn die App
+        für sie erreichbar ist, z. B. über GitHub Pages oder Docker.
+      </p>
     </section>
 
     <section id="summary" class="card summary" hidden>
@@ -104,6 +133,7 @@
   </footer>
 
   <script src="calc.js"></script>
+  <script src="share.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
