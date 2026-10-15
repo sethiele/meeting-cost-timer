@@ -115,7 +115,7 @@ body[data-phase="running"] .status { color: var(--money); border-color: var(--mo
 
 .add-form {
   display: grid; gap: 12px;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(137px, 1fr));
   align-items: end;
 }
 .add-form label:first-child { grid-column: span 2; }
@@ -152,6 +152,10 @@ body[data-phase="running"] .status { color: var(--money); border-color: var(--mo
   .remove { grid-column: 2; grid-row: 2 / span 2; }
 }
 
+input#p-count {
+	width: 122px;
+}
+
 /* ---------- Ergebnis ---------- */
 
 .summary-grid {
@@ -164,11 +168,20 @@ body[data-phase="running"] .status { color: var(--money); border-color: var(--mo
 #sum-cost { color: var(--money); }
 .row { display: flex; flex-wrap: wrap; gap: 12px; justify-content: flex-end; }
 
+/* ---------- Footer ---------- */
+
+.footer {
+  max-width: 960px; margin: 0 auto; padding: 0 16px 32px;
+  text-align: center; color: var(--muted); font-size: .85rem;
+}
+.footer a { color: var(--accent); }
+
 /* ---------- Präsentationsmodus (zum Teilen in Teams) ---------- */
 
 body.present .topbar,
 body.present #participants,
-body.present #summary { display: none; }
+body.present #summary,
+body.present .footer { display: none; }
 body.present main { max-width: none; min-height: 100vh; padding: 16px; align-content: center; }
 body.present .display { border: 0; background: transparent; }
 body.present .cost { font-size: clamp(3rem, 16vw, 14rem); }
