@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Meeting-Kosten-Timer</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1>Meeting-Kosten-Timer</h1>
+    <label class="inline">Währung
+      <select id="currency">
+        <option value="EUR" selected>Euro (€)</option>
+        <option value="USD">US-Dollar ($)</option>
+        <option value="GBP">Britisches Pfund (£)</option>
+        <option value="CHF">Schweizer Franken (CHF)</option>
+        <option value="JPY">Japanischer Yen (¥)</option>
+      </select>
+    </label>
+  </header>
+
+  <main>
+    <section id="display" class="display">
+      <div class="status" id="status">Bereit</div>
+      <div class="cost" id="cost">0,00 €</div>
+      <div class="time" id="time">0:00:00</div>
+      <div class="meta">
+        <span id="rate-meta"></span>
+        <span id="people-meta"></span>
+      </div>
+
+      <div class="controls">
+        <div id="start-controls" class="start-controls">
+          <fieldset class="start-mode">
+            <legend class="sr-only">Startzeitpunkt</legend>
+            <label><input type="radio" name="start-mode" value="now" checked> Ab jetzt</label>
+            <label><input type="radio" name="start-mode" value="time"> Startzeit
+              <input type="time" id="start-time" step="60"></label>
+          </fieldset>
+          <button id="start" class="primary big">Start</button>
+        </div>
+        <button id="stop" class="danger big" hidden>Stopp</button>
+        <button id="present" hidden>Präsentation</button>
+      </div>
+      <p id="start-error" class="error" role="alert" hidden></p>
+    </section>
+
+    <section id="summary" class="card summary" hidden>
+      <h2>Ergebnis</h2>
+      <dl class="summary-grid">
+        <div><dt>Gesamtkosten</dt><dd id="sum-cost"></dd></div>
+        <div><dt>Gesamtdauer</dt><dd id="sum-time"></dd></div>
+        <div><dt>Zeitraum</dt><dd id="sum-range"></dd></div>
+        <div><dt>Ø pro Minute</dt><dd id="sum-per-minute"></dd></div>
+      </dl>
+      <div class="row">
+        <button id="copy">Ergebnis kopieren</button>
+        <button id="reset" class="primary">Neues Meeting</button>
+      </div>
+    </section>
+
+    <section class="card" id="participants">
+      <h2>Teilnehmende</h2>
+      <form id="add-form" class="add-form">
+        <label>Name / Rolle
+          <input id="p-name" autocomplete="off" placeholder="z. B. Entwicklerin">
+        </label>
+        <label>Anzahl
+          <input id="p-count" type="number" min="1" step="1" value="1" required>
+        </label>
+        <label>Berechnung
+          <select id="p-mode">
+            <option value="hourly">Stundensatz</option>
+            <option value="annual">Jahresgehalt</option>
+          </select>
+        </label>
+        <label><span id="p-amount-label">Stundensatz</span>
+          <input id="p-amount" type="number" min="0" step="any" required>
+        </label>
+        <label id="p-hours-wrap" hidden>Arbeitsstunden / Jahr
+          <input id="p-hours" type="number" min="1" step="1" value="1720">
+        </label>
+        <label id="p-since-wrap" hidden>Dabei seit
+          <select id="p-since">
+            <option value="now">jetzt</option>
+            <option value="start">Meetingbeginn</option>
+          </select>
+        </label>
+        <div class="form-footer">
+          <span class="rate-preview" id="p-rate-preview"></span>
+          <button type="submit" class="primary">Hinzufügen</button>
+        </div>
+      </form>
+
+      <p id="empty" class="empty">Noch niemand hinzugefügt.</p>
+      <ul id="list" class="list"></ul>
+    </section>
+  </main>
+
+  <script src="calc.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

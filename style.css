@@ -1,0 +1,176 @@
+:root {
+  --bg: #f4f5f7;
+  --surface: #ffffff;
+  --text: #1b1d21;
+  --muted: #646b76;
+  --border: #dde0e5;
+  --accent: #1f6feb;
+  --accent-text: #ffffff;
+  --danger: #d1242f;
+  --money: #0b7a3e;
+  --radius: 12px;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f1115;
+    --surface: #181b21;
+    --text: #e8eaee;
+    --muted: #9aa2ae;
+    --border: #2c313a;
+    --accent: #4c8dff;
+    --accent-text: #0b0d10;
+    --danger: #ff5c63;
+    --money: #3ddc84;
+    color-scheme: dark;
+  }
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap;
+}
+
+.topbar {
+  display: flex; flex-wrap: wrap; gap: 12px;
+  align-items: center; justify-content: space-between;
+  max-width: 960px; margin: 0 auto; padding: 16px;
+}
+.topbar h1 { font-size: 1.25rem; margin: 0; }
+
+main {
+  max-width: 960px; margin: 0 auto; padding: 0 16px 48px;
+  display: grid; gap: 16px;
+}
+
+.card, .display {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+}
+h2 { font-size: 1.05rem; margin: 0 0 14px; }
+
+label { display: grid; gap: 4px; font-size: .85rem; color: var(--muted); }
+label.inline { display: flex; align-items: center; gap: 8px; }
+
+input, select, button {
+  font: inherit; color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  min-height: 40px;
+}
+input:focus-visible, select:focus-visible, button:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 1px;
+}
+button { cursor: pointer; font-weight: 600; }
+button:hover { border-color: var(--muted); }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+button.danger { background: var(--danger); border-color: var(--danger); color: #fff; }
+button.big { font-size: 1.1rem; padding: 10px 28px; }
+
+/* ---------- Großanzeige ---------- */
+
+.display { text-align: center; padding: 28px 20px; }
+.status {
+  display: inline-block; font-size: .8rem; font-weight: 600; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--muted);
+  border: 1px solid var(--border); border-radius: 999px; padding: 2px 10px;
+}
+body[data-phase="running"] .status { color: var(--money); border-color: var(--money); }
+
+.cost, .time { font-variant-numeric: tabular-nums; font-weight: 700; line-height: 1.1; }
+.cost { font-size: clamp(2.6rem, 10vw, 5.5rem); color: var(--money); margin-top: 12px; }
+.time { font-size: clamp(1.6rem, 6vw, 3rem); margin-top: 4px; }
+.meta {
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 16px;
+  color: var(--muted); margin-top: 8px; font-variant-numeric: tabular-nums;
+}
+
+.controls {
+  display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; align-items: center;
+  margin-top: 20px;
+}
+.start-controls { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; align-items: center; }
+.start-mode { border: 0; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; }
+.start-mode label { display: flex; align-items: center; gap: 8px; font-size: 1rem; color: var(--text); }
+.start-mode input[type="radio"] { min-height: auto; }
+
+.error { color: var(--danger); margin: 12px 0 0; }
+
+/* ---------- Teilnehmende ---------- */
+
+.add-form {
+  display: grid; gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  align-items: end;
+}
+.add-form label:first-child { grid-column: span 2; }
+.form-footer {
+  grid-column: 1 / -1;
+  display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between;
+}
+.rate-preview { color: var(--muted); font-variant-numeric: tabular-nums; }
+
+.empty { color: var(--muted); margin: 16px 0 0; }
+
+.list { list-style: none; padding: 0; margin: 16px 0 0; }
+.person {
+  display: grid; gap: 4px 16px; align-items: center;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1.2fr) minmax(0, 1.5fr) minmax(0, 1fr) auto;
+  padding: 10px 0; border-top: 1px solid var(--border);
+}
+.person.left { color: var(--muted); }
+.p-name { font-weight: 600; overflow-wrap: anywhere; }
+.badge {
+  font-size: .75rem; font-weight: 600; color: var(--muted);
+  border: 1px solid var(--border); border-radius: 999px; padding: 0 8px;
+}
+.p-rate, .p-status { color: var(--muted); font-size: .9rem; }
+.p-cost { font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; }
+.person:not(.left) .p-cost { color: var(--money); }
+.remove { min-height: 32px; padding: 4px 10px; font-size: .85rem; }
+
+@media (max-width: 640px) {
+  .add-form label:first-child { grid-column: 1 / -1; }
+  .person { grid-template-columns: 1fr auto; }
+  .p-rate, .p-status { grid-column: 1; }
+  .p-cost { grid-column: 2; grid-row: 1; }
+  .remove { grid-column: 2; grid-row: 2 / span 2; }
+}
+
+/* ---------- Ergebnis ---------- */
+
+.summary-grid {
+  display: grid; gap: 12px; margin: 0 0 16px;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+.summary-grid div { background: var(--bg); border-radius: 8px; padding: 12px; }
+.summary-grid dt { color: var(--muted); font-size: .85rem; }
+.summary-grid dd { margin: 2px 0 0; font-size: 1.4rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+#sum-cost { color: var(--money); }
+.row { display: flex; flex-wrap: wrap; gap: 12px; justify-content: flex-end; }
+
+/* ---------- Präsentationsmodus (zum Teilen in Teams) ---------- */
+
+body.present .topbar,
+body.present #participants,
+body.present #summary { display: none; }
+body.present main { max-width: none; min-height: 100vh; padding: 16px; align-content: center; }
+body.present .display { border: 0; background: transparent; }
+body.present .cost { font-size: clamp(3rem, 16vw, 14rem); }
+body.present .time { font-size: clamp(2rem, 8vw, 6rem); }
+body.present .meta { font-size: clamp(1rem, 2.4vw, 1.8rem); }
