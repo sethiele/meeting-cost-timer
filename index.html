@@ -7,6 +7,9 @@
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+  <div id="dev-banner" class="dev-banner" role="note" hidden>
+    Entwicklungsversion (dev): nicht aus einem Release gebaut
+  </div>
   <header class="topbar">
     <h1>Meeting-Kosten-Timer</h1>
     <label class="inline">Währung
@@ -134,8 +137,10 @@
   <footer class="footer">
     Quellcode auf <a href="https://github.com/sethiele/meeting-cost-timer">GitHub</a>.
     Dort stehen auch die <a href="https://github.com/sethiele/meeting-cost-timer#datenschutz">Hinweise zum Datenschutz</a>.
+    <span id="version" class="version" hidden></span>
   </footer>
 
+  <script src="js/version.js"></script>
   <script src="js/calc.js"></script>
   <script src="js/share.js"></script>
   <script src="js/app.js"></script>

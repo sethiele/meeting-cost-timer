@@ -476,6 +476,12 @@
     if (location.hash.startsWith('#s=')) location.reload();
   });
 
+  // 'dev' = nicht aus einem Release gebaut (z. B. lokal aus dem Repo): deutlich kennzeichnen.
+  const version = window.APP_VERSION || 'dev';
+  $('version').textContent = `Version ${version}`;
+  $('version').hidden = false;
+  $('dev-banner').hidden = version !== 'dev';
+
   loadSharedState();
   setCurrency($('currency').value);
 })();

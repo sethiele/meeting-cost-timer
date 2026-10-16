@@ -8,6 +8,9 @@
   --accent-text: #ffffff;
   --danger: #d1242f;
   --money: #0b7a3e;
+  --warn: #f5b400;
+  --warn-dark: #e09a00;
+  --warn-text: #1b1d21;
   --radius: 12px;
   color-scheme: light;
 }
@@ -23,6 +26,9 @@
     --accent-text: #0b0d10;
     --danger: #ff5c63;
     --money: #3ddc84;
+    --warn: #d99a00;
+    --warn-dark: #b88200;
+    --warn-text: #0b0d10;
     color-scheme: dark;
   }
 }
@@ -197,6 +203,15 @@ input#p-count {
   text-align: center; color: var(--muted); font-size: .85rem;
 }
 .footer a { color: var(--accent); }
+.dev-banner {
+  position: sticky; top: 0; z-index: 10;
+  padding: 10px 16px; text-align: center;
+  font-weight: 800; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--warn-text);
+  background: repeating-linear-gradient(-45deg, var(--warn) 0 18px, var(--warn-dark) 18px 36px);
+  border-bottom: 3px solid var(--warn-text);
+}
+.version { display: block; margin-top: 4px; font-variant-numeric: tabular-nums; }
 
 /* ---------- Präsentationsmodus (zum Teilen in Teams) ---------- */
 
