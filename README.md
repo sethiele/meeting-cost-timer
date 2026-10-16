@@ -21,7 +21,7 @@ Die App läuft komplett im Browser. Es gibt keinen Server und keine Abhängigkei
 - Der Bildschirm bleibt an, solange der Timer läuft (Screen Wake Lock, sofern vom Browser unterstützt)
 - Läuft ein Meeting, warnt der Browser vor dem Neuladen oder Schließen des Tabs
 - Helles und dunkles Farbschema je nach Systemeinstellung
-- **Versionsnummer im Footer**, automatisch aus den Git-Tags (z. B. `v1.2.0`, zwischen zwei Releases `v1.2.0-3-g83367d9`)
+- **Versionsnummer im Footer**, automatisch aus den Git-Tags (z. B. `v1.2.0`)
 
 ## Nutzung
 
@@ -34,17 +34,19 @@ cd meeting-cost-timer
 open index.html        # macOS; unter Windows: start index.html, unter Linux: xdg-open index.html
 ```
 
-Alternativ lässt sich die App als statische Seite hosten, z. B. über **GitHub Pages**. Der Workflow `.github/workflows/pages.yml` veröffentlicht die Seite bei jedem Push auf `main` und bei jedem Tag `v*`. Dafür muss unter Settings → Pages als Source „GitHub Actions“ eingestellt sein.
+Alternativ lässt sich die App als statische Seite hosten, z. B. über **GitHub Pages**. Der Workflow `.github/workflows/pages.yml` veröffentlicht die Seite **nur bei einem Tag `v*`**. Änderungen auf `main` sind also erst nach dem nächsten Release online. Dafür muss unter Settings → Pages als Source „GitHub Actions“ eingestellt sein.
 
 ### Versionsnummer
 
 Die Version kommt aus den Git-Tags und wird beim Ausliefern in `js/version.js` geschrieben (`git describe --tags`):
 
-- **GitHub Pages:** Der Pages-Workflow setzt sie bei jedem Deployment. Auf einem getaggten Commit steht dort z. B. `v1.2.0`, sonst `v1.2.0-3-g83367d9` (3 Commits nach `v1.2.0`, Commit `83367d9`).
+- **GitHub Pages:** Der Pages-Workflow setzt sie bei jedem Deployment, also immer den Namen des Tags, z. B. `v1.2.0`.
 - **Docker:** `docker build --build-arg VERSION=$(git describe --tags) .`; der Docker-Workflow übergibt bei einem Release den Tag automatisch.
 - **Lokal** steht in `js/version.js` der Wert `dev`. Dann zeigt die App oben einen auffälligen gelb-schwarzen Balken „Entwicklungsversion (dev)“. Das gilt auch für ein Docker-Image, das ohne `--build-arg VERSION` gebaut wurde.
 
-Neue Version veröffentlichen: Tag setzen und pushen, z. B. `git tag v1.3.0 && git push origin v1.3.0`.
+Neue Version veröffentlichen: Tag auf `main` setzen und pushen, z. B. `git tag -a v1.3.0 -m "v1.3.0" && git push origin v1.3.0`. Ein fehlgeschlagenes Deployment lässt sich mit `gh workflow run pages.yml --ref v1.3.0` wiederholen.
+
+Hinweis: GitHub Pages erkennt Deployments am Commit-Hash. Ein zweites Tag auf einem bereits veröffentlichten Commit ändert die Seite deshalb nicht. Für jede neue Version braucht es also einen neuen Commit.
 
 ### Ablauf
 
@@ -81,7 +83,7 @@ Ein Teilen-Link enthält die Daten des Meetings, standardmäßig auch **Namen un
 | `js/share.js`   | Kodieren/Dekodieren der Teilen-Links und Anonymisierung, ohne DOM, auch in Node nutzbar |
 | `img/`          | Bilder und Icons (aus CSS als `url("../img/…")`, aus HTML als `img/…` einbinden) |
 | `Dockerfile`, `.dockerignore` | Container mit nginx; `.dockerignore` hält Repo- und Doku-Dateien aus dem Image; Build-Argument `VERSION` |
-| `.github/workflows/` | `pages.yml` veröffentlicht GitHub Pages mit Versionsnummer, `docker.yml` baut bei Releases das Image |
+| `.github/workflows/` | `pages.yml` veröffentlicht GitHub Pages bei Tags `v*` mit Versionsnummer, `docker.yml` baut bei Releases das Image |
 | `CLAUDE.md`  | Hinweise für Claude Code (KI-Assistent) zur Arbeit am Repository |
 
 ## Weiterentwicklung
