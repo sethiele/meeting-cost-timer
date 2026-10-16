@@ -8,6 +8,7 @@
   // Gesamter Zustand lebt nur im Speicher – es wird nichts persistiert.
   const state = {
     phase: 'setup', // 'setup' | 'running' | 'stopped'
+    title: '', // optionaler Meetingtitel, wird beim Start übernommen
     startedAt: null,
     endedAt: null,
     participants: [], // { id, name, count, rate, joinedAt, leftAt }
@@ -130,7 +131,10 @@
     $('reset').hidden = readonly;
     $('p-since-wrap').hidden = phase !== 'running';
     $('summary').hidden = phase !== 'stopped';
-    if (phase !== 'running') document.title = 'Meeting-Kosten-Timer';
+    $('title-wrap').hidden = phase !== 'setup';
+    $('meeting-title').textContent = state.title;
+    $('meeting-title').hidden = phase === 'setup' || !state.title;
+    if (phase !== 'running') document.title = state.title ? `${state.title} · Meeting-Kosten-Timer` : 'Meeting-Kosten-Timer';
     if (phase === 'stopped') renderSummary();
   }
 
@@ -152,6 +156,7 @@
 
   function shareUrl() {
     const snapshot = {
+      title: state.title,
       startedAt: state.startedAt,
       endedAt: state.endedAt,
       currency: $('currency').value,
@@ -239,6 +244,7 @@
       startedAt = ts;
     }
     showStartError('');
+    state.title = $('title-input').value.trim();
     state.startedAt = startedAt;
     state.phase = 'running';
     ticker = setInterval(tick, 50);
@@ -257,6 +263,8 @@
   function reset() {
     exitPresentation();
     state.phase = 'setup';
+    state.title = '';
+    $('title-input').value = '';
     state.startedAt = null;
     state.endedAt = null;
     state.participants = [];
@@ -278,6 +286,7 @@
 
   function copySummary() {
     const lines = [
+      ...(state.title ? [`Meeting: ${state.title}`] : []),
       `Meeting-Kosten: ${$('sum-cost').textContent}`,
       `Dauer: ${$('sum-time').textContent} (${$('sum-range').textContent})`,
       `Ø pro Minute: ${$('sum-per-minute').textContent}`,
@@ -360,6 +369,7 @@
 
     state.readonly = true;
     state.anonymous = shared.anonymous;
+    state.title = shared.title;
     state.startedAt = shared.startedAt;
     state.endedAt = shared.endedAt;
     state.participants = shared.participants;
