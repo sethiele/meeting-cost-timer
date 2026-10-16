@@ -62,10 +62,12 @@ Ein Teilen-Link enthält die Daten des Meetings, standardmäßig auch **Namen un
 | Datei        | Inhalt |
 |--------------|--------|
 | `index.html` | Markup: Großanzeige, Ergebnis, Formular und Liste der Teilnehmenden |
-| `style.css`  | Styles; Farbtokens in `:root` mit Dark-Mode-Overrides; Präsentationsmodus über `body.present` |
-| `app.js`     | Zustand, Rendering, Event-Handler, Ticker, Präsentationsmodus, Wake Lock |
-| `calc.js`    | Reine Berechnungslogik ohne DOM, auch in Node nutzbar |
-| `share.js`   | Kodieren/Dekodieren der Teilen-Links und Anonymisierung, ohne DOM, auch in Node nutzbar |
+| `css/style.css` | Styles; Farbtokens in `:root` mit Dark-Mode-Overrides; Präsentationsmodus über `body.present` |
+| `js/app.js`     | Zustand, Rendering, Event-Handler, Ticker, Präsentationsmodus, Wake Lock |
+| `js/calc.js`    | Reine Berechnungslogik ohne DOM, auch in Node nutzbar |
+| `js/share.js`   | Kodieren/Dekodieren der Teilen-Links und Anonymisierung, ohne DOM, auch in Node nutzbar |
+| `img/`          | Bilder und Icons (aus CSS als `url("../img/…")`, aus HTML als `img/…` einbinden) |
+| `Dockerfile`, `.dockerignore` | Container mit nginx; `.dockerignore` hält Repo- und Doku-Dateien aus dem Image |
 | `CLAUDE.md`  | Hinweise für Claude Code (KI-Assistent) zur Arbeit am Repository |
 
 ## Weiterentwicklung
@@ -122,13 +124,13 @@ Für die Berechnungslogik gibt es noch keine Testdateien. Ein schneller Check in
 
 ```sh
 node -e '
-const C = require("./calc.js");
+const C = require("./js/calc.js");
 const H = 3600000;
 const p = { name: "Dev", rate: 60, count: 2, joinedAt: null, leftAt: null };
 console.log(C.participantCost(p, 0, H)); // 120
 console.log(C.formatDuration(3723000));  // 1:02:03
 
-const S = require("./share.js");
+const S = require("./js/share.js");
 const code = S.encode({ startedAt: 0, endedAt: H, currency: "EUR", participants: [p] });
 console.log(C.totalCost(S.decode(code).participants, 0, H)); // 120
 '

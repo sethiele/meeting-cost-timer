@@ -1,4 +1,11 @@
+# Nur die statischen App-Dateien gehören ins Image.
+.git
+.github
+.claude
+.dockerignore
 .nojekyll
+Dockerfile
+README.md
 CLAUDE.md
 LICENSE
-README.md
+tests
