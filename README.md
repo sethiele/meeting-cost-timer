@@ -8,6 +8,7 @@ Die App läuft komplett im Browser. Es gibt keinen Server und keine Abhängigkei
 
 - **Live-Zähler** für Kosten (mit Cent-Beträgen) und Zeit, dazu Kosten pro Stunde und pro Minute sowie die Zahl der Anwesenden
 - **Währungen:** Euro, US-Dollar, Britisches Pfund, Schweizer Franken, Japanischer Yen (nur Anzeige, keine Umrechnung)
+- **Meetingtitel (optional):** Vor dem Start eingeben; er steht über dem Zähler, auch im Präsentationsmodus, im Browser-Tab nach dem Stopp, im kopierten Ergebnis und in geteilten Links
 - **Teilnehmende einzeln erfassen:** Name oder Rolle und Anzahl (z. B. „3 × Entwickler“)
 - **Stundensatz:** direkt eingeben oder aus dem Jahresgehalt berechnen lassen (Jahresgehalt ÷ Arbeitsstunden pro Jahr, Vorgabe 1720 h)
 - **Start ab jetzt oder ab einer Uhrzeit** von heute, auch in der Vergangenheit; Zeit und Kosten zählen dann ab diesem Zeitpunkt
@@ -36,7 +37,7 @@ Alternativ lässt sich die App als statische Seite hosten, z. B. über **GitHub 
 
 ### Ablauf
 
-1. Währung wählen.
+1. Währung wählen und optional einen Meetingtitel eingeben.
 2. Teilnehmende mit Stundensatz oder Jahresgehalt hinzufügen.
 3. „Ab jetzt“ oder eine Startzeit wählen und **Start** drücken.
 4. Optional auf **Präsentation** klicken und das Fenster im Call teilen, oder über **Link teilen** einen Link kopieren und z. B. in den Meeting-Chat posten.
@@ -45,9 +46,9 @@ Alternativ lässt sich die App als statische Seite hosten, z. B. über **GitHub 
 
 ### Link teilen
 
-- Der Link enthält den kompletten Stand des Meetings (Startzeit, ggf. Endzeit, Währung, Teilnehmende) im URL-Fragment (`#s=…`). Wer ihn öffnet, sieht den Timer schreibgeschützt; Kosten und Zeit berechnet der eigene Browser aus den Zeitstempeln.
+- Der Link enthält den kompletten Stand des Meetings (Titel, Startzeit, ggf. Endzeit, Währung, Teilnehmende) im URL-Fragment (`#s=…`). Wer ihn öffnet, sieht den Timer schreibgeschützt; Kosten und Zeit berechnet der eigene Browser aus den Zeitstempeln.
 - Der Link ist ein **Schnappschuss**. Werden danach Personen hinzugefügt oder entfernt oder wird das Meeting gestoppt, sehen andere das erst mit einem neuen Link. Die App weist darauf hin („Der geteilte Link ist veraltet“).
-- Mit **Namen und Stundensätze ausblenden** enthält der Link nur Zeitabschnitte mit Kopfzahl und Gesamtsatz. Die Teilnehmendenliste wird dann nicht angezeigt.
+- Mit **Namen und Stundensätze ausblenden** enthält der Link nur Zeitabschnitte mit Kopfzahl und Gesamtsatz. Die Teilnehmendenliste wird dann nicht angezeigt. Ein Meetingtitel wird trotzdem mitgeteilt.
 - Die Uhren der Geräte können um einige Sekunden voneinander abweichen.
 - Damit andere den Link öffnen können, muss die App für sie erreichbar sein (z. B. GitHub Pages oder Docker). Ein Link auf eine lokal geöffnete `file://`-Datei funktioniert nur auf dem eigenen Rechner.
 
@@ -91,6 +92,7 @@ Der gesamte Zustand liegt in einem Objekt in `app.js`:
 ```js
 state = {
   phase: 'setup' | 'running' | 'stopped',
+  title,          // optionaler Meetingtitel ('' = keiner), wird beim Start übernommen
   startedAt,      // Zeitstempel (ms) des Meetingbeginns
   endedAt,        // Zeitstempel des Stopps
   participants: [ // ein Eintrag pro Zeile, ggf. mit Anzahl > 1

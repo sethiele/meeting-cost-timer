@@ -5,6 +5,7 @@
   const VERSION = 1;
   const MAX_PARTICIPANTS = 500;
   const MAX_NAME_LENGTH = 200;
+  const MAX_TITLE_LENGTH = 200;
 
   // Ersetzt die Einträge durch Zeitabschnitte mit gleicher Besetzung. Pro Abschnitt bleiben nur
   // Kopfzahl und Gesamtsatz übrig (count = Köpfe, rate = Gesamtsatz / Köpfe), sodass die Kosten
@@ -50,7 +51,8 @@
     return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
   }
 
-  // snapshot: { startedAt, endedAt, currency, participants }. Zeitpunkte werden relativ zu
+  // snapshot: { title, startedAt, endedAt, currency, participants }. Der Titel ist optional und
+  // wird auch in anonymen Links mitgeteilt. Zeitpunkte werden relativ zu
   // startedAt gespeichert, damit der Link kürzer wird.
   function encode(snapshot, { anonymous = false } = {}) {
     const { startedAt, endedAt, currency } = snapshot;
@@ -64,6 +66,7 @@
       a: anonymous ? 1 : 0,
       p: list.map((p) => [anonymous ? '' : p.name, p.count, p.rate, rel(p.joinedAt), rel(p.leftAt)]),
     };
+    if (snapshot.title) payload.t = snapshot.title;
     return toBase64Url(JSON.stringify(payload));
   }
 
@@ -86,6 +89,8 @@
     if (data.e !== null && data.e < 0) fail();
     if (typeof data.c !== 'string' || !/^[A-Z]{3}$/.test(data.c)) fail();
     if (!Array.isArray(data.p) || data.p.length > MAX_PARTICIPANTS) fail();
+    // Links ohne Titel (auch ältere) haben kein Feld t.
+    if (data.t !== undefined && (typeof data.t !== 'string' || data.t.length > MAX_TITLE_LENGTH)) fail();
 
     const abs = (t) => (t === null ? null : data.s + t);
     const participants = data.p.map((entry, i) => {
@@ -99,6 +104,7 @@
     });
 
     return {
+      title: data.t === undefined ? '' : data.t.trim(),
       startedAt: data.s,
       endedAt: abs(data.e),
       currency: data.c,
